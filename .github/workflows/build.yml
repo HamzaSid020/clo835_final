@@ -1,29 +1,33 @@
 name: Build and Push to ECR
+'on':
+  push:
+    branches:
+      - main
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Login to Amazon ECR
+        run: >
+          aws ecr get-login-password --region <AWS_REGION> | docker login
+          --username AWS --password-stdin
+          <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com
+      - name: Build Docker Images
+        run: |
+          docker build -t webapp-image .
+          docker build -t mysql-image .
+      - name: Push to Amazon ECR
+        run: >
+          docker tag webapp-image:latest
+          <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/webapp-image:latest
 
-on:
-    push:
-          branches:
-                  - main
+          docker tag mysql-image:latest
+          <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/mysql-image:latest
 
-          jobs:
-              build-and-push:
-                    runs-on: ubuntu-latest
-                        steps:
-                                - name: Checkout Code
-                                        uses: actions/checkout@v3
+          docker push
+          <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/webapp-image:latest
 
-                                              - name: Login to Amazon ECR
-                                                      run: aws ecr get-login-password --region <AWS_REGION> | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com
-
-                                                            - name: Build Docker Images
-                                                                    run: |
-                                                                                docker build -t webapp-image .
-                                                                                          docker build -t mysql-image .
-
-                                                                                                - name: Push to Amazon ECR
-                                                                                                        run: |
-                                                                                                                    docker tag webapp-image:latest <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/webapp-image:latest
-                                                                                                                              docker tag mysql-image:latest <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/mysql-image:latest
-                                                                                                                                        docker push <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/webapp-image:latest
-                                                                                                                                                  docker push <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/mysql-image:latest
-
+          docker push
+          <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/mysql-image:latest
