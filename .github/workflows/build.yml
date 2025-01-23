@@ -11,7 +11,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-
+        
+      - name: Test AWS Credentials
+        run: |
+          aws sts get-caller-identity
+          aws ecr describe-repositories --region ${{ secrets.AWS_REGION }}
+    
       - name: Setup AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
