@@ -12,19 +12,26 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Setup AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Login to Amazon ECR
         run: |
-          aws ecr get-login-password --region <AWS_REGION> | docker login \
-          --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login \
+          --username AWS --password-stdin ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
       - name: Build Docker Images
         run: |
-          docker build -t webapp-image .
-          docker build -t mysql-image .
+          docker build -t webapp-image ./webapp
+          docker build -t mysql-image ./mysql
 
-      - name: Push to Amazon ECR
+      - name: Tag and Push to Amazon ECR
         run: |
-          docker tag webapp-image:latest <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/webapp-image:latest
-          docker tag mysql-image:latest <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/mysql-image:latest
-          docker push <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/webapp-image:latest
-          docker push <ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/mysql-image:latest
+          docker tag webapp-image:latest ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/webapp-image:latest
+          docker tag mysql-image:latest ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/mysql-image:latest
+          docker push ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/webapp-image:latest
+          docker push ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/mysql-image:latest
