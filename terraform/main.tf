@@ -51,12 +51,11 @@ resource "aws_route_table_association" "my_route_table_association" {
   route_table_id = aws_route_table.my_route_table.id
 }
 
-# Create an Amazon ECR repository for the web application
+# Create ECR repositories for the web application and MySQL images
 resource "aws_ecr_repository" "web_app_repo" {
   name = "my-web-app-repo"
 }
 
-# Create an Amazon ECR repository for the MySQL image
 resource "aws_ecr_repository" "mysql_repo" {
   name = "mysql-repo"
 }
@@ -95,6 +94,28 @@ resource "aws_instance" "web_instance" {
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.my_public_subnet.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
+  user_data = <<-EOF
+              #!/bin/bash
+              # Update packages
+              yum update -y
+              
+              # Install Docker
+              amazon-linux-extras install docker
+              service docker start
+              usermod -a -G docker ec2-user
+              
+              # Log in to ECR
+              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${aws_ecr_repository.web_app_repo.repository_url}
+              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${aws_ecr_repository.mysql_repo.repository_url}
+              
+              # Pull the images from ECR
+              docker pull ${aws_ecr_repository.web_app_repo.repository_url}:latest
+              docker pull ${aws_ecr_repository.mysql_repo.repository_url}:latest
+              
+              # Run Docker containers
+              docker run -d --name webapp -p 80:80 ${aws_ecr_repository.web_app_repo.repository_url}:latest
+              docker run -d --name mysql -p 3306:3306 ${aws_ecr_repository.mysql_repo.repository_url}:latest
+            EOF
 
   tags = {
     Name = "MyWebApp-Instance"
