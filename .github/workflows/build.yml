@@ -22,9 +22,9 @@ jobs:
       - name: Test AWS Credentials
         run: |
           echo "Running AWS sts get-caller-identity"
-          aws sts get-caller-identity --debug
+          aws sts get-caller-identity 
           echo "Describing ECR repositories"
-          aws ecr describe-repositories --region ${{ secrets.AWS_REGION }} --debug
+          aws ecr describe-repositories --region ${{ secrets.AWS_REGION }}
 
       - name: Create ECR Repositories if not exist
         run: |
