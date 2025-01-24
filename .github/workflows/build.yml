@@ -34,9 +34,9 @@ jobs:
       - name: Build Docker Images
         run: |
           echo "Building webapp image"
-          docker build --log-level=debug -t webapp-image ./webapp
+          docker build -t webapp-image ./webapp
           echo "Building mysql image"
-          docker build --log-level=debug -t mysql-image ./mysql
+          docker build -t mysql-image ./mysql
 
       - name: Tag and Push to Amazon ECR
         run: |
