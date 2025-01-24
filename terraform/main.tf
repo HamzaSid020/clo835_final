@@ -95,30 +95,6 @@ resource "aws_instance" "web_instance" {
   subnet_id              = aws_subnet.my_public_subnet.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
   associate_public_ip_address = true
-
-  user_data = <<-EOF
-            #!/bin/bash
-            # Update packages
-            yum update -y
-
-            # Install Docker
-            amazon-linux-extras install docker
-            service docker start
-            usermod -a -G docker ec2-user
-
-            # Log in to ECR
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${aws_ecr_repository.web_app_repo.repository_url}
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${aws_ecr_repository.mysql_repo.repository_url}
-
-            # Pull the images from ECR
-            docker pull ${aws_ecr_repository.web_app_repo.repository_url}:latest
-            docker pull ${aws_ecr_repository.mysql_repo.repository_url}:latest
-
-            # Run Docker containers
-            docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=rootpassword ${aws_ecr_repository.mysql_repo.repository_url}:latest
-            docker run -d --name webapp -p 80:80 -e DB_HOST=mysql -e DB_PORT=3306 ${aws_ecr_repository.web_app_repo.repository_url}:latest
-          EOF
-
   tags = {
     Name = "MyWebApp-Instance"
   }

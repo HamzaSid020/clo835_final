@@ -29,6 +29,16 @@ jobs:
           echo "Logging in to ECR"
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com || exit 1
 
+      - name: Check if ECR Repositories Exist and Create If Needed
+        run: |
+          echo "Checking if repositories exist"
+          
+          # Check for web app repo existence
+          aws ecr describe-repositories --repository-names my-web-app-repo --region ${{ secrets.AWS_REGION }} || aws ecr create-repository --repository-name my-web-app-repo --region ${{ secrets.AWS_REGION }}
+          
+          # Check for MySQL repo existence
+          aws ecr describe-repositories --repository-names mysql-repo --region ${{ secrets.AWS_REGION }} || aws ecr create-repository --repository-name mysql-repo --region ${{ secrets.AWS_REGION }}
+        
       - name: Build Docker Images
         run: |
           echo "Building webapp image"
