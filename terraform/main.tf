@@ -63,30 +63,38 @@ resource "aws_ecr_repository" "mysql_repo" {
 # Create a security group to allow traffic to the EC2 instance
 resource "aws_security_group" "ec2_sg" {
   name        = "ec2_security_group"
-  description = "Allow HTTP and SSH traffic"
+  description = "Allow HTTP, SSH, and MySQL traffic"
   vpc_id      = aws_vpc.my_vpc.id
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] # Allow SSH access from anywhere
   }
 
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["0.0.0.0/0"] # Allow HTTP access from anywhere
+  }
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow MySQL access from anywhere (consider restricting this in production)
   }
 
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1"
+    protocol    = "-1" # Allow all outbound traffic
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
 
 # Create an EC2 instance in the new subnet
 resource "aws_instance" "web_instance" {
