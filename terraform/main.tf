@@ -66,6 +66,7 @@ resource "aws_security_group" "ec2_sg" {
   description = "Allow HTTP, SSH, and MySQL traffic"
   vpc_id      = aws_vpc.my_vpc.id
 
+  # Allow SSH access
   ingress {
     from_port   = 22
     to_port     = 22
@@ -73,13 +74,39 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"] # Allow SSH access from anywhere
   }
 
+  # Allow HTTP access on port 8080
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"] # Allow HTTP access from anywhere
   }
 
+  # Allow HTTP access on port 8081
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow HTTP access from anywhere
+  }
+
+  # Allow HTTP access on port 8082
+  ingress {
+    from_port   = 8082
+    to_port     = 8082
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow HTTP access from anywhere
+  }
+
+  # Allow HTTP access on port 8083
+  ingress {
+    from_port   = 8083
+    to_port     = 8083
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow HTTP access from anywhere
+  }
+
+  # Allow MySQL access
   ingress {
     from_port   = 3306
     to_port     = 3306
@@ -87,14 +114,14 @@ resource "aws_security_group" "ec2_sg" {
     cidr_blocks = ["0.0.0.0/0"] # Allow MySQL access from anywhere (consider restricting this in production)
   }
 
+  # Allow all outbound traffic
   egress {
     from_port   = 0
     to_port     = 0
-    protocol    = "-1" # Allow all outbound traffic
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
 
 # Create an EC2 instance in the new subnet
 resource "aws_instance" "web_instance" {
