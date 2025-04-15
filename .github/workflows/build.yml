@@ -1,17 +1,18 @@
 name: Build and Push to ECR
 
-# on:
-#   push:
-#     branches:
-#       - main
+on:
+  # Trigger workflow manually from the GitHub Actions UI
+  workflow_dispatch:
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Checkout Code
       - name: Checkout Code
         uses: actions/checkout@v3
             
+      # Step 2: Setup AWS CLI Credentials
       - name: Setup AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -19,16 +20,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
         
+      # Step 3: Test AWS Credentials
       - name: Test AWS Credentials
         run: |
           echo "Running AWS sts get-caller-identity"
           aws sts get-caller-identity 
           
+      # Step 4: Login to Amazon ECR
       - name: Login to Amazon ECR
         run: |
           echo "Logging in to ECR"
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com || exit 1
 
+      # Step 5: Check if ECR Repositories Exist and Create If Needed
       - name: Check if ECR Repositories Exist and Create If Needed
         run: |
           echo "Checking if repositories exist"
@@ -39,6 +43,7 @@ jobs:
           # Check for MySQL repo existence
           aws ecr describe-repositories --repository-names mysql-repo --region ${{ secrets.AWS_REGION }} || aws ecr create-repository --repository-name mysql-repo --region ${{ secrets.AWS_REGION }}
         
+      # Step 6: Build Docker Images
       - name: Build Docker Images
         run: |
           echo "Building webapp image"
@@ -46,13 +51,17 @@ jobs:
           echo "Building mysql image"
           docker build -t mysql-image -f Dockerfile_mysql .
 
+      # Step 7: Tag and Push Docker Images to Amazon ECR
       - name: Tag and Push to Amazon ECR
         run: |
           echo "Tagging webapp image"
           docker tag webapp-image:latest ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/my-web-app-repo:latest
+          
           echo "Tagging mysql image"
           docker tag mysql-image:latest ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/mysql-repo:latest
+
           echo "Pushing webapp image to ECR"
           docker push ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/my-web-app-repo:latest
+
           echo "Pushing mysql image to ECR"
           docker push ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/mysql-repo:latest
